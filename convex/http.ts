@@ -1,19 +1,19 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import type { WebhookEvent } from "@clerk/nextjs/server";
 import { Webhook } from "svix";
+import type { WebhookEvent } from "@clerk/nextjs/server";
 import { internal } from "./_generated/api";
 
 const http = httpRouter();
+
 http.route({
   method: "POST",
-  path: "/clerk_webhook",
+  path: "/clerk-webhook",
   handler: httpAction(async (ctx, req) => {
     const body = await validateRequest(req);
     if (!body) {
       return new Response("Unauthorized", { status: 401 });
     }
-
     switch (body.type) {
       case "user.created":
         await ctx.runMutation(internal.functions.user.upsert, {
@@ -21,7 +21,6 @@ http.route({
           image: body.data.image_url,
           clerkId: body.data.id,
         });
-
         break;
       case "user.updated":
         await ctx.runMutation(internal.functions.user.upsert, {
@@ -36,10 +35,8 @@ http.route({
             clerkId: body.data.id,
           });
         }
-
         break;
     }
-
     return new Response("OK", { status: 200 });
   }),
 });
@@ -48,7 +45,6 @@ const validateRequest = async (req: Request) => {
   const svix_id = req.headers.get("svix-id");
   const svix_timestamp = req.headers.get("svix-timestamp");
   const svix_signature = req.headers.get("svix-signature");
-
   const text = await req.text();
 
   try {
